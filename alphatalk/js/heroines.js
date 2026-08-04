@@ -61,7 +61,7 @@ const HEROINES = {
     moods: { 1: "proud", 2: "tired", 3: "lonely", 4: "proud", 5: "lonely", 6: "tired", 7: "lonely" },
     days: null, variants: null, endings: null,
     ignoreMorning: null, milestones: null, scout: null, ai: null,
-    pending: true,     // 아직 콘텐츠 없음 — 목록에서 숨김
+    // 변주(B~E안)는 아직 없다. scriptFor 가 본 대본만 쓰므로 동작에는 문제가 없다.
   },
 
   /* ── 세라핀 · 여관 간판딸 (밝음) ── 콘텐츠 작업 예정 ── */
@@ -92,6 +92,20 @@ const HEROINES = {
   if (typeof AI !== "undefined" && AI.CARD) e.ai = { card: AI.CARD };
   // days[n].mood 는 레지스트리의 moods 로 일원화
   if (e.days) Object.keys(e.moods).forEach((d) => { if (e.days[d]) e.days[d].mood = e.moods[d]; });
+})();
+
+/* ---------- 루나 데이터 주입 (js/luna.js) ---------- */
+(function () {
+  const l = HEROINES.luna;
+  if (typeof LUNA_DAYS === "undefined") return;   // 파일이 없으면 pending 상태 유지
+  l.days = LUNA_DAYS;
+  if (typeof LUNA_ENDINGS !== "undefined") l.endings = LUNA_ENDINGS;
+  if (typeof LUNA_IGNORE_MORNING !== "undefined") l.ignoreMorning = LUNA_IGNORE_MORNING;
+  if (typeof LUNA_MILESTONES !== "undefined") l.milestones = LUNA_MILESTONES;
+  if (typeof LUNA_SCOUT !== "undefined") l.scout = LUNA_SCOUT;
+  if (typeof LUNA_EPILOGUE !== "undefined") l.epilogue = LUNA_EPILOGUE;
+  Object.keys(l.moods).forEach((d) => { if (l.days[d]) l.days[d].mood = l.moods[d]; });
+  delete l.pending;                                // 7일치가 다 갖춰졌으므로 목록에 등장
 })();
 
 /* ---------- 헬퍼 ---------- */
