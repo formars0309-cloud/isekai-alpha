@@ -50,6 +50,12 @@ const HEROINES = {
     name: "루나",
     title: "마탑의 현자",
     portrait: "luna",
+    faces: {
+      normal: "img/luna-normal.jpg",
+      shy:    "img/luna-shy.jpg",
+      blush:  "img/luna-blush.jpg",
+      smile:  "img/luna-smile.jpg",
+    },
     status: "관측되지 않은 것은 존재하지 않는다.",
     likes: "int",
     moods: { 1: "proud", 2: "tired", 3: "lonely", 4: "proud", 5: "lonely", 6: "tired", 7: "lonely" },
