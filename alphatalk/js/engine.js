@@ -266,7 +266,7 @@
   let playToken = 0, showAllDays = false;
   function openRoom(id) {
     currentRoom = id; showAllDays = false;
-    show("scr-chat"); bindBack();
+    show("scr-chat"); bindBack(); initScrollKeeper();
     if (id === "bot") {
       $("chat-name").textContent = "알파 시스템";
       $("chat-status").textContent = "당신의 성장을 중계합니다";
@@ -357,11 +357,34 @@
     const sc = $("msg-scroll");
     sc.scrollTo({ top: sc.scrollHeight, behavior: instant ? "auto" : "smooth" });
   }
+  /* 답장 바가 열리면 대화 영역이 그만큼(200px 이상) 줄어든다. 그런데 그 축소가
+     반영되는 시점이 rAF 몇 프레임 뒤인지 보장되지 않아, 미리 스크롤하면 마지막
+     대사가 바 뒤에 가려진 채로 남았다. 높이 변화를 직접 감지해 다시 붙인다.
+     (모바일 키보드가 올라올 때도 같은 문제가 생긴다) */
+  let stickBottom = true;
+  function initScrollKeeper() {
+    const sc = $("msg-scroll");
+    if (!sc || sc.dataset.keeper) return;
+    sc.dataset.keeper = "1";
+    sc.addEventListener("scroll", () => {
+      stickBottom = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 80;
+    }, { passive: true });
+    if (window.ResizeObserver) {
+      new ResizeObserver(() => { if (stickBottom) scrollBottom(true); }).observe(sc);
+    }
+  }
+  function scrollBottomSoon() {
+    stickBottom = true;
+    scrollBottom(true);
+    requestAnimationFrame(() => scrollBottom(true));
+  }
   function pushMsg(id, m) {
     m.d = S.day;
     msgsOf(id).push(m);
     if (id !== "bot") S.h[id].time = "지금";
-    if (currentRoom === id) { $("msg-list").appendChild(msgEl(id, m)); scrollBottom(!!m.photo); }
+    // 메시지는 한 줄씩 간격을 두고 도착하므로 즉시 스크롤로 충분하다.
+    // smooth 는 사진이 늦게 로드돼 높이가 바뀌면 목표를 놓치고 마지막 줄을 화면 밖에 남긴다.
+    if (currentRoom === id) { $("msg-list").appendChild(msgEl(id, m)); scrollBottom(true); }
     else if (m.who !== "me") { if (id === "bot") S.bot.unread++; else S.h[id].unread++; }
     save();
   }
@@ -477,7 +500,7 @@
       // 슬롯 소진 — 읽을 수는 있지만 답할 수 없다
       bar.innerHTML = `<div class="reply-none">오늘은 ${HERO.get(id).name}에게 답장할 여유가 없다.<br>
         <small>${S.phase === "morning" ? "아침" : "밤"} 답장 기회를 모두 썼다.</small></div>`;
-      bar.classList.remove("hidden"); scrollBottom(); return;
+      bar.classList.remove("hidden"); scrollBottomSoon(); return;
     }
     bar.innerHTML = `<div class="reply-label">▼ 답장을 선택하세요 (${slotsLeft(slotKind())}회 남음)</div>`;
     choices.forEach((c) => {
@@ -514,7 +537,7 @@
       }
       bar.appendChild(btn);
     });
-    bar.classList.remove("hidden"); scrollBottom();
+    bar.classList.remove("hidden"); scrollBottomSoon();
   }
   function hideReplies() { $("reply-bar").classList.add("hidden"); }
   function checkReq(req) {
