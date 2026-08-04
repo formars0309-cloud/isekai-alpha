@@ -323,11 +323,36 @@
       if (id === "bot") avatar = `<div class="m-avatar">📱</div>`;
       else avatar = `<div class="m-avatar">${portraitSVG(HERO.get(id).portrait, m.emo || "normal")}</div>`;
     }
-    row.innerHTML = `${avatar}<div class="bubble">${esc(m.t)}</div>
+    const body = m.photo
+      ? `<div class="bubble photo"><img src="${esc(m.photo)}" alt="사진" decoding="async">` +
+        (m.cap ? `<div class="photo-cap">${esc(m.cap)}</div>` : "") + `</div>`
+      : `<div class="bubble">${esc(m.t)}</div>`;
+    row.innerHTML = `${avatar}${body}
       <div class="stamp">${mine && m.read1 ? '<span class="read1">1</span>' : ""}<span>${m.time || ""}</span></div>`;
+    if (m.photo) {
+      const im = row.querySelector("img");
+      im.onerror = () => { row.remove(); };            // 파일이 없어도 게임은 계속된다
+      im.onclick = () => openPhoto(m.photo);            // 탭하면 크게 본다
+      // 사진이 늦게 뜨면 smooth 스크롤이 어긋난다. 캐시로 이미 완료된 경우까지 함께 처리.
+      const settle = () => { if (currentRoom) scrollBottom(true); };
+      if (im.complete) setTimeout(settle, 0); else im.onload = settle;
+    }
     return row;
   }
   const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  /* 사진 크게 보기 — 아무 데나 누르면 닫힌다 */
+  function openPhoto(src) {
+    let ov = $("photo-view");
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.id = "photo-view"; ov.className = "photo-view hidden";
+      ov.innerHTML = `<img alt="사진"><button class="photo-close" aria-label="닫기">✕</button>`;
+      ov.onclick = () => ov.classList.add("hidden");
+      $("app").appendChild(ov);
+    }
+    ov.querySelector("img").src = src;
+    ov.classList.remove("hidden");
+  }
   function scrollBottom(instant) {
     const sc = $("msg-scroll");
     sc.scrollTo({ top: sc.scrollHeight, behavior: instant ? "auto" : "smooth" });
@@ -336,7 +361,7 @@
     m.d = S.day;
     msgsOf(id).push(m);
     if (id !== "bot") S.h[id].time = "지금";
-    if (currentRoom === id) { $("msg-list").appendChild(msgEl(id, m)); scrollBottom(); }
+    if (currentRoom === id) { $("msg-list").appendChild(msgEl(id, m)); scrollBottom(!!m.photo); }
     else if (m.who !== "me") { if (id === "bot") S.bot.unread++; else S.h[id].unread++; }
     save();
   }
@@ -380,6 +405,14 @@
         await wait(300); continue;
       }
       consecE = 0;
+      /* 사진 전송 — 메신저다운 이벤트 연출. cap 은 사진 밑 한 줄 설명(선택) */
+      if (node.photo !== undefined) {
+        await showTyping(id, node.d || 900);
+        if (token !== playToken) return;
+        pushMsg(id, { who: "her", photo: node.photo, cap: node.cap ? fmt(node.cap, id) : "", time: clock() });
+        SND.receive(); st.pending.shift(); save();
+        await wait(500); continue;
+      }
       if (node.me !== undefined) {
         await wait(450); if (token !== playToken) return;
         sendMine(id, fmt(node.me, id)); st.pending.shift(); save(); await wait(350);
