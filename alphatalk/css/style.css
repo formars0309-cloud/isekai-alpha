@@ -381,25 +381,34 @@ body {
 
 /* ---------- 엔딩 ---------- */
 #scr-ending {
-  align-items: center; justify-content: center; text-align: center;
+  /* .screen 은 flex-direction:column 이라 세로축을 잡는 건 justify-content 다.
+     center 로 두면 내용이 화면보다 길 때 위쪽이 잘리고 스크롤로도 못 올라간다.
+     flex-start + .ending-inner 의 margin:auto 라야 짧으면 가운데, 길면 위부터 스크롤된다. */
+  align-items: center; justify-content: flex-start; text-align: center;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,126,182,.2), transparent),
     var(--bg);
 }
-.ending-inner { padding: 28px; width: 100%; }
+.ending-inner { padding: 28px; width: 100%; margin-top: auto; margin-bottom: auto; }
 .ending-sys { color: var(--sys); letter-spacing: 3px; font-size: 13px; }
 .ending-icon { font-size: 72px; margin: 14px 0 6px; }
+/* 일러스트가 있으면 이모지는 작게 (중복 방지) */
+.ending-art:not(.hidden) + .ending-icon { font-size: 34px; margin: 8px 0 0; }
 .ending-title {
   font-size: 38px; font-weight: 900;
   background: linear-gradient(135deg, #ffe9ad, #f5c451 40%, #ff7eb6);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .ending-desc { color: var(--dim); font-size: 14px; line-height: 1.7; margin: 14px 0 18px; }
-/* 엔딩 일러스트 — 없으면 hidden */
-.ending-art { margin: 10px 0 4px; }
+/* 엔딩 일러스트 — 없으면 hidden. 세로(2:3) 기준 */
+.ending-art { margin: 12px 0 2px; }
 .ending-art img {
-  width: 100%; max-width: 300px; border-radius: 16px;
-  border: 1px solid var(--line); box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  display: block; margin: 0 auto;
+  max-width: min(62vw, 260px); max-height: 42vh;
+  width: auto; height: auto;
+  border-radius: 16px;
+  border: 1px solid var(--line); box-shadow: 0 10px 34px rgba(0,0,0,.5);
 }
 /* 후일담 — 스타일 축 + 스탯 축 */
 .ending-epilogue {

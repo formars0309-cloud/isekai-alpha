@@ -549,6 +549,7 @@ const DAYS = {
 const ENDINGS = {
   ok: {
     icon: "💃", title: "파트너 성사",
+    art: "img/ely-ok.jpg",
     script: [
       { c: "당신은 분수 앞에서, 단말이 아니라 목소리로 말했다" },
       { e: "………", d: 1500 },
@@ -569,6 +570,7 @@ const ENDINGS = {
   },
   fail: {
     icon: "🌧️", title: "다음 축제에",
+    art: "img/ely-fail.jpg",
     script: [
       { c: "당신은 분수 앞에서, 떨리는 목소리로 말했다" },
       { e: "………", d: 1500 },
@@ -583,6 +585,7 @@ const ENDINGS = {
   },
   chicken: {
     icon: "🌙", title: "말하지 못한 밤",
+    art: "img/ely-chicken.jpg",
     script: [
       { c: "자정. 분수의 물이 멎었다. 당신은 끝내 광장에 나가지 못했다" },
       { e: "…자정이다." },

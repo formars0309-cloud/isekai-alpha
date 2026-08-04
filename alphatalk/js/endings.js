@@ -17,6 +17,7 @@ Object.assign(ENDINGS, {
   /* ══════ 90+ · 진엔딩 ══════ */
   truelove: {
     icon: "💞", title: "두 개의 달 아래",
+    art: "img/ely-truelove.jpg",
     script: [
       { c: "당신은 분수 앞에서, 단말이 아니라 목소리로 말했다" },
       { e: "…잠깐.", d: 1400 },
@@ -47,6 +48,7 @@ Object.assign(ENDINGS, {
   /* ══════ 65~79 · 아깝게 ══════ */
   near: {
     icon: "🌧️", title: "반 걸음",
+    art: "img/ely-near.jpg",
     script: [
       { c: "당신은 분수 앞에서, 목소리로 말했다" },
       { e: "………", d: 1600 },
@@ -67,6 +69,7 @@ Object.assign(ENDINGS, {
   /* ══════ ~44 · 남 ══════ */
   stranger: {
     icon: "🌫️", title: "좋은 신병",
+    art: "img/ely-stranger.jpg",
     script: [
       { c: "당신은 분수 앞에서, 목소리로 말했다" },
       { e: "………", d: 1600 },
@@ -84,6 +87,7 @@ Object.assign(ENDINGS, {
   /* ══════ 신청 안 함 · 호감 65+ · 은유 엔딩 ══════ */
   night: {
     icon: "🌙", title: "밤에만 오는 연락",
+    art: "img/ely-night.jpg",
     script: [
       { c: "자정. 분수의 물이 멎었다. 당신은 끝내 광장에 나가지 못했다" },
       { e: "…자정이다." },
