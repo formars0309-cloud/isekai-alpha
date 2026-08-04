@@ -209,7 +209,7 @@ ${MOOD_DESC[mood]}
       })),
     });
     if (kind === "night") {
-      nodes.push({ bot: "금일 교신 정산. 호감도 {aff}/100. 성사 예상선 55." });
+      nodes.push({ bot: "금일 교신 정산. 호감도 {aff}/100. 성사 예상선 80." });
     }
     return nodes;
   }

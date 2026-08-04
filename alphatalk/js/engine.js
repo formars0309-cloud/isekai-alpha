@@ -53,6 +53,11 @@
       if (!d || d.v !== 2 || !d.h) return null;
       // 저장 이후 히로인이 추가됐을 수 있다
       HERO.active().forEach((id) => { if (!d.h[id]) d.h[id] = freshHero(id); });
+      // endedSuccess 도입 전 세이브는 엔딩 키로 성공 여부를 복원한다.
+      // 이 보정이 없으면 성사 엔딩도 결과 화면과 공유문에서 실패 표식으로 표시된다.
+      if (d.ended && typeof d.endedSuccess !== "boolean") {
+        d.endedSuccess = d.ended === "truelove" || d.ended === "ok";
+      }
       Object.keys(d.h).forEach((id) => d.h[id].msgs.forEach((m) => { if (m.read1) m.read1 = false; }));
       return d;
     } catch (e) { return null; }
@@ -156,12 +161,40 @@
     };
     const nodes = await AI.generate(kind, probe);
     generating--;
-    if (nodes) { S.ai.used++; S.h[id].aiMemos = probe.ai.memos; save(); return nodes; }
+    if (nodes) {
+      S.ai.used++; S.h[id].aiMemos = probe.ai.memos; save();
+      return preserveScriptContracts(nodes, scripted);
+    }
     if (probe.ai.lastError) {
       S.ai.lastError = probe.ai.lastError;
       botMsg("⚠️ AI 생성 실패 — 기본 대사로 진행합니다. (" + String(probe.ai.lastError).slice(0, 80) + ")");
     }
     return scripted;
+  }
+
+  /* AI는 대사만 생성한다. 사진 연출과 진행에 영향을 주는 선택지 메타데이터는
+     본 대본에서 되살려야 D1·D3 읽씹, D5·D6 분기가 AI 모드에서도 유지된다. */
+  function preserveScriptContracts(generated, scripted) {
+    const result = generated.slice();
+    const sourceChoiceNode = scripted.find((n) => n && Array.isArray(n.choices));
+    const generatedChoiceNode = result.find((n) => n && Array.isArray(n.choices));
+    if (sourceChoiceNode && generatedChoiceNode) {
+      const structural = ["req", "flag", "ignore", "suit", "clear", "aff", "final", "end"];
+      generatedChoiceNode.choices = generatedChoiceNode.choices.map((choice) => {
+        const source = sourceChoiceNode.choices.find((c) => c.style === choice.style && !c.ignore);
+        if (!source) return choice;
+        const merged = Object.assign({}, choice);
+        structural.forEach((key) => { if (source[key] !== undefined) merged[key] = source[key]; });
+        return merged;
+      });
+      sourceChoiceNode.choices.filter((c) => c.ignore).forEach((c) => generatedChoiceNode.choices.push(c));
+    }
+    const photos = scripted.filter((n) => n && n.photo !== undefined);
+    if (photos.length) {
+      const at = result.indexOf(generatedChoiceNode);
+      result.splice(at < 0 ? result.length : at, 0, ...photos);
+    }
+    return result;
   }
 
   /* ---------------- 홈 ---------------- */
@@ -172,7 +205,8 @@
   const hasVisible = (id) => {
     const st = S.h[id];
     return !!st.pendingChoices || st.pending.some((n) =>
-      n.e !== undefined || n.me !== undefined || n.c !== undefined || n.note !== undefined || n.choices || n.branch);
+      n.e !== undefined || n.me !== undefined || n.c !== undefined || n.note !== undefined ||
+      n.photo !== undefined || n.choices || n.branch);
   };
   const anyVisible = () => HERO.active().some(hasVisible);
 
@@ -211,7 +245,7 @@
       const preview = st.pendingChoices ? `${H.name}가 답장을 기다리고 있다…`
         : incoming > 0 ? "새로운 메시지가 도착했다"
         : replied ? "✓ 오늘 답장함"
-        : last ? (last.who === "me" ? "나: " : "") + last.t : "…";
+        : last ? (last.photo ? "📷 사진" : (last.who === "me" ? "나: " : "") + last.t) : "…";
       list.appendChild(roomCard(id, H.name, H.title, preview, st.time, unread, replied, avatarHTML(id, st.emo)));
     });
     const lastBot = S.bot.msgs.length ? S.bot.msgs[S.bot.msgs.length - 1].t : "…";
@@ -241,7 +275,8 @@
     const st = S.h[id];
     let n = st.pendingChoices ? 1 : 0;
     for (const node of st.pending) {
-      if (node.e !== undefined || node.c !== undefined || node.me !== undefined || node.note !== undefined) n++;
+      if (node.e !== undefined || node.c !== undefined || node.me !== undefined ||
+          node.note !== undefined || node.photo !== undefined) n++;
       if (node.branch) n++;
       if (node.choices) break;
     }
@@ -258,14 +293,16 @@
       <div class="meta"><div class="time">${time || ""}</div>${unread > 0 ? `<div class="badge">${unread}</div>` : ""}</div>`;
     el.querySelector(".preview").textContent = preview;
     el.onclick = () => openRoom(id);
-    el.onkeydown = (e) => { if (e.key === "Enter") openRoom(id); };
+    el.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openRoom(id); }
+    };
     return el;
   }
 
   /* ---------------- 채팅방 ---------------- */
   let playToken = 0, showAllDays = false;
   function openRoom(id) {
-    currentRoom = id; showAllDays = false;
+    currentRoom = id; showAllDays = false; stickBottom = true;
     show("scr-chat"); bindBack(); initScrollKeeper();
     if (id === "bot") {
       $("chat-name").textContent = "알파 시스템";
@@ -285,7 +322,7 @@
     save();
   }
   function msgsOf(id) { return id === "bot" ? S.bot.msgs : S.h[id].msgs; }
-  function renderRoomMsgs(id) {
+  function renderRoomMsgs(id, revealOld) {
     const list = $("msg-list"); list.innerHTML = "";
     const msgs = msgsOf(id);
     const start = showAllDays ? 0 : Math.max(0, msgs.length - TAIL);
@@ -293,7 +330,7 @@
       const btn = document.createElement("button");
       btn.className = "day-fold";
       btn.textContent = `▲ 이전 대화 ${start}개 더 보기`;
-      btn.onclick = () => { showAllDays = true; renderRoomMsgs(id); };
+      btn.onclick = () => { showAllDays = true; renderRoomMsgs(id, true); };
       list.appendChild(btn);
     }
     let lastDay = start > 0 ? (msgs[start - 1] || {}).d : null;
@@ -306,7 +343,8 @@
       }
       list.appendChild(msgEl(id, m));
     }
-    scrollBottom(true);
+    if (revealOld) { $("msg-scroll").scrollTop = 0; stickBottom = false; }
+    else { stickBottom = true; scrollBottom(true); }
   }
   function msgEl(id, m) {
     if (m.who === "c" || m.who === "note") {
@@ -324,7 +362,7 @@
       else avatar = `<div class="m-avatar">${avatarHTML(id, m.emo || "normal")}</div>`;
     }
     const body = m.photo
-      ? `<div class="bubble photo"><img src="${esc(m.photo)}" alt="사진" decoding="async">` +
+      ? `<div class="bubble photo"><img src="${esc(m.photo)}" alt="${esc(m.cap || "엘리시아가 보낸 사진")}" decoding="async" role="button" tabindex="0" aria-label="사진 크게 보기">` +
         (m.cap ? `<div class="photo-cap">${esc(m.cap)}</div>` : "") + `</div>`
       : `<div class="bubble">${esc(m.t)}</div>`;
     row.innerHTML = `${avatar}${body}
@@ -333,8 +371,11 @@
       const im = row.querySelector("img");
       im.onerror = () => { row.remove(); };            // 파일이 없어도 게임은 계속된다
       im.onclick = () => openPhoto(m.photo);            // 탭하면 크게 본다
+      im.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPhoto(m.photo); }
+      };
       // 사진이 늦게 뜨면 smooth 스크롤이 어긋난다. 캐시로 이미 완료된 경우까지 함께 처리.
-      const settle = () => { if (currentRoom) scrollBottom(true); };
+      const settle = () => { if (currentRoom && stickBottom) scrollBottom(true); };
       if (im.complete) setTimeout(settle, 0); else im.onload = settle;
     }
     return row;
@@ -368,6 +409,7 @@
       ov.id = "photo-view"; ov.className = "photo-view hidden";
       ov.innerHTML = `<img alt="사진"><button class="photo-close" aria-label="닫기">✕</button>`;
       ov.onclick = () => ov.classList.add("hidden");
+      ov.onkeydown = (e) => { if (e.key === "Escape") ov.classList.add("hidden"); };
       $("app").appendChild(ov);
     }
     ov.querySelector("img").src = src;
@@ -394,7 +436,7 @@
     }
   }
   function scrollBottomSoon() {
-    stickBottom = true;
+    if (!stickBottom) return;
     scrollBottom(true);
     requestAnimationFrame(() => scrollBottom(true));
   }
@@ -404,7 +446,10 @@
     if (id !== "bot") S.h[id].time = "지금";
     // 메시지는 한 줄씩 간격을 두고 도착하므로 즉시 스크롤로 충분하다.
     // smooth 는 사진이 늦게 로드돼 높이가 바뀌면 목표를 놓치고 마지막 줄을 화면 밖에 남긴다.
-    if (currentRoom === id) { $("msg-list").appendChild(msgEl(id, m)); scrollBottom(true); }
+    if (currentRoom === id) {
+      $("msg-list").appendChild(msgEl(id, m));
+      if (stickBottom) scrollBottom(true);
+    }
     else if (m.who !== "me") { if (id === "bot") S.bot.unread++; else S.h[id].unread++; }
     save();
   }
@@ -488,7 +533,8 @@
     const row = document.createElement("div");
     row.className = "msg-row";
     row.innerHTML = `<div class="m-avatar">${avatarHTML(id, S.h[id].emo)}</div><div class="typing"><i></i><i></i><i></i></div>`;
-    $("msg-list").appendChild(row); typingEl = row; scrollBottom();
+    $("msg-list").appendChild(row); typingEl = row;
+    if (stickBottom) scrollBottom();
     await wait(ms);
     if (typingEl) { typingEl.remove(); typingEl = null; }
   }
@@ -645,7 +691,9 @@
       el.innerHTML = `<div class="ico">${cd.ico}</div><div><div class="nm">${cd.nm}</div>
         <div class="ds">${cd.ds}${who ? ` · <b>${who}</b>의 기분을 읽는다` : ""}</div></div>`;
       el.onclick = () => pickCard(cd, target);
-      el.onkeydown = (e) => { if (e.key === "Enter") pickCard(cd, target); };
+      el.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickCard(cd, target); }
+      };
       list.appendChild(el);
     });
     $("modal-cards").classList.remove("hidden");
@@ -740,9 +788,13 @@
       const H = HERO.get(id);
       const el = document.createElement("div");
       el.className = "day-card";
+      el.setAttribute("role", "button"); el.setAttribute("tabindex", "0");
       el.innerHTML = `<div class="avatar-sm">${avatarHTML(id, S.h[id].emo)}</div>
         <div><div class="nm">${H.name}</div><div class="ds">${H.title}</div></div>`;
       el.onclick = () => { $("modal-final").classList.add("hidden"); confessTo(id); };
+      el.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+      };
       list.appendChild(el);
     });
     box.querySelector("#btn-final-none").onclick = () => {
@@ -894,8 +946,13 @@
     AI.MODELS.forEach((m) => {
       const el = document.createElement("div");
       el.className = "model-opt" + (m.id === cur ? " sel" : "");
+      el.setAttribute("role", "radio"); el.setAttribute("tabindex", "0");
+      el.setAttribute("aria-checked", String(m.id === cur));
       el.innerHTML = `<div class="m-nm">${m.nm}</div><div class="m-ds">${m.ds}</div><div class="m-cost">${m.cost}</div>`;
       el.onclick = () => { const c = AI.getCfg(); c.model = m.id; AI.setCfg(c); renderModels(); };
+      el.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+      };
       list.appendChild(el);
     });
   }
