@@ -59,7 +59,7 @@
   <!-- 채팅방 -->
   <section id="scr-chat" class="screen">
     <header class="chat-head">
-      <button id="btn-back" class="back-btn">‹</button>
+      <button id="btn-back" class="back-btn" aria-label="채팅방 목록으로 돌아가기">‹</button>
       <div class="chat-peer">
         <div id="chat-avatar" class="chat-avatar"></div>
         <div>
@@ -73,7 +73,7 @@
   </section>
 
   <!-- AI 설정 모달 -->
-  <div id="modal-ai" class="modal hidden">
+  <div id="modal-ai" class="modal hidden" role="dialog" aria-modal="true" aria-label="AI 대화 생성 설정">
     <div class="modal-card">
       <p class="cards-sys">【 AI 대화 생성 】</p>
       <p class="ai-warn">⚠️ 개발자·실험용 기능입니다. 그냥 플레이하시려면 이 창을 닫으세요 — 게임은 이대로 완전히 즐길 수 있습니다.</p>
@@ -83,14 +83,14 @@
         키가 없으면 미리 작성된 대본으로 플레이되며, 그것만으로도 대화마다 최대 5가지 변주가 준비돼 있습니다.<br>
         <b>사용료는 본인 계정에 청구됩니다</b>(Haiku 기준 한 판 약 90원).
       </p>
-      <label class="ai-label">API 키</label>
+      <label class="ai-label" for="inp-apikey">API 키</label>
       <input id="inp-apikey" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
       <p class="ai-note">
         🔒 키는 <b>이 브라우저에만</b> 저장되고 Anthropic API로만 전송됩니다. 공용 PC에서는 사용하지 마세요.<br>
         키 발급: console.anthropic.com → API Keys
       </p>
-      <label class="ai-label">모델</label>
-      <div id="model-list" class="model-list"></div>
+      <div id="model-label" class="ai-label">모델</div>
+      <div id="model-list" class="model-list" role="radiogroup" aria-labelledby="model-label"></div>
       <div id="ai-status" class="ai-status hidden"></div>
       <button id="btn-ai-test" class="btn btn-ghost">연결 테스트</button>
       <button id="btn-ai-save" class="btn btn-primary">저장</button>
@@ -99,12 +99,12 @@
   </div>
 
   <!-- 최종 신청 모달 -->
-  <div id="modal-final" class="modal hidden">
+  <div id="modal-final" class="modal hidden" role="dialog" aria-modal="true" aria-label="최종 파트너 신청">
     <div class="modal-card"></div>
   </div>
 
   <!-- 일과 카드 모달 -->
-  <div id="modal-cards" class="modal hidden">
+  <div id="modal-cards" class="modal hidden" role="dialog" aria-modal="true" aria-label="오늘의 일과 선택">
     <div class="modal-card">
       <p class="cards-sys">【오늘의 일과 — 하나만 고를 수 있다】</p>
       <div id="card-list" class="card-list"></div>
