@@ -70,12 +70,17 @@ const HEROINES = {
     name: "세라핀",
     title: "달빛 정원 간판딸",
     portrait: "sera",
+    faces: {
+      normal: "img/sera-normal.jpg",
+      shy:    "img/sera-shy.jpg",
+      blush:  "img/sera-blush.jpg",
+      smile:  "img/sera-smile.jpg",
+    },
     status: "오늘의 수프는 양파예요~",
     likes: "cha",
     moods: { 1: "lonely", 2: "proud", 3: "tired", 4: "tired", 5: "proud", 6: "lonely", 7: "lonely" },
     days: null, variants: null, endings: null,
     ignoreMorning: null, milestones: null, scout: null, ai: null,
-    pending: true,
   },
 };
 
@@ -106,6 +111,20 @@ const HEROINES = {
   if (typeof LUNA_EPILOGUE !== "undefined") l.epilogue = LUNA_EPILOGUE;
   Object.keys(l.moods).forEach((d) => { if (l.days[d]) l.days[d].mood = l.moods[d]; });
   delete l.pending;                                // 7일치가 다 갖춰졌으므로 목록에 등장
+})();
+
+/* ---------- 세라핀 데이터 주입 (js/sera.js) ---------- */
+(function () {
+  const s = HEROINES.sera;
+  if (typeof SERA_DAYS === "undefined") return;
+  s.days = SERA_DAYS;
+  if (typeof SERA_ENDINGS !== "undefined") s.endings = SERA_ENDINGS;
+  if (typeof SERA_IGNORE_MORNING !== "undefined") s.ignoreMorning = SERA_IGNORE_MORNING;
+  if (typeof SERA_MILESTONES !== "undefined") s.milestones = SERA_MILESTONES;
+  if (typeof SERA_SCOUT !== "undefined") s.scout = SERA_SCOUT;
+  if (typeof SERA_EPILOGUE !== "undefined") s.epilogue = SERA_EPILOGUE;
+  Object.keys(s.moods).forEach((d) => { if (s.days[d]) s.days[d].mood = s.moods[d]; });
+  delete s.pending;
 })();
 
 /* ---------- 헬퍼 ---------- */
