@@ -4,6 +4,7 @@
 
    각 히로인이 제공해야 하는 것:
      name/title/portrait/status  기본 표시
+     faces   {normal,shy,blush,smile}  표정별 아바타 이미지 (없으면 SVG 초상화 사용)
      likes                       끌리는 스탯 ("str" | "int") — 낮 카드 정찰과 연동
      moods   {1..7: mood}        날짜별 기분 (proud/lonely/tired)
      days    {1..7: {morning, night}}   본 대본
@@ -23,6 +24,13 @@ const HEROINES = {
     name: "엘리시아",
     title: "왕국 기사단장",
     portrait: "ely",
+    // 표정별 아바타 이미지. 없거나 로드에 실패하면 portraits.js 의 SVG 로 자동 폴백된다.
+    faces: {
+      normal: "img/face-normal.jpg",
+      shy:    "img/face-shy.jpg",
+      blush:  "img/face-blush.jpg",
+      smile:  "img/face-smile.jpg",
+    },
     status: "검(劍)은 거짓말하지 않는다.",
     likes: "str",
     // 날짜별 기분 — 무드×스타일 매칭의 기준

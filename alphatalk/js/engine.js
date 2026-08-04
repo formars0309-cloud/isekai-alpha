@@ -212,7 +212,7 @@
         : incoming > 0 ? "새로운 메시지가 도착했다"
         : replied ? "✓ 오늘 답장함"
         : last ? (last.who === "me" ? "나: " : "") + last.t : "…";
-      list.appendChild(roomCard(id, H.name, H.title, preview, st.time, unread, replied, portraitSVG(H.portrait, st.emo)));
+      list.appendChild(roomCard(id, H.name, H.title, preview, st.time, unread, replied, avatarHTML(id, st.emo)));
     });
     const lastBot = S.bot.msgs.length ? S.bot.msgs[S.bot.msgs.length - 1].t : "…";
     list.appendChild(roomCard("bot", "알파 시스템", "관전 봇", lastBot, S.bot.time, S.bot.unread, false, null));
@@ -276,7 +276,7 @@
       const H = HERO.get(id), st = S.h[id];
       $("chat-name").textContent = H.name;
       $("chat-status").textContent = st.status;
-      $("chat-avatar").innerHTML = portraitSVG(H.portrait, st.emo);
+      $("chat-avatar").innerHTML = avatarHTML(id, st.emo);
       if (!S.hintShown) { S.hintShown = true; st.msgs.push({ who: "note", t: "💡 화면을 탭하면 대화가 빨라진다", d: S.day }); }
       renderRoomMsgs(id); st.unread = 0;
       if (st.pendingChoices) showReplies(id, st.pendingChoices);
@@ -321,7 +321,7 @@
     let avatar = "";
     if (!mine) {
       if (id === "bot") avatar = `<div class="m-avatar">📱</div>`;
-      else avatar = `<div class="m-avatar">${portraitSVG(HERO.get(id).portrait, m.emo || "normal")}</div>`;
+      else avatar = `<div class="m-avatar">${avatarHTML(id, m.emo || "normal")}</div>`;
     }
     const body = m.photo
       ? `<div class="bubble photo"><img src="${esc(m.photo)}" alt="사진" decoding="async">` +
@@ -340,6 +340,26 @@
     return row;
   }
   const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  /* ---------------- 아바타 ----------------
+     히로인에 faces 가 있으면 그림을, 없으면 기존 SVG 초상화를 쓴다.
+     대본의 emo 는 happy/angry 도 쓰므로 파일이 있는 표정으로 매핑한다.
+     이미지가 깨져도 그 자리에서 SVG 로 되돌아가므로 아바타가 비지 않는다. */
+  const FACE_OF = { happy: "smile", angry: "normal", "": "normal" };
+  function avatarHTML(id, emo) {
+    const H = HERO.get(id); if (!H) return "";
+    const e = emo || "normal";
+    const faces = H.faces || {};
+    const src = faces[e] || faces[FACE_OF[e] || e] || faces.normal;
+    if (!src) return portraitSVG(H.portrait, e);
+    return `<img class="face" src="${esc(src)}" alt="" draggable="false"` +
+      ` onerror="window.__avatarFallback&&window.__avatarFallback(this,'${esc(id)}','${esc(e)}')">`;
+  }
+  // 인라인 onerror 에서 부르므로 전역에 하나만 노출한다.
+  window.__avatarFallback = function (img, id, emo) {
+    const H = HERO.get(id); if (!H || !img.parentNode) return;
+    img.parentNode.innerHTML = portraitSVG(H.portrait, emo);
+  };
   /* 사진 크게 보기 — 아무 데나 누르면 닫힌다 */
   function openPhoto(src) {
     let ov = $("photo-view");
@@ -452,7 +472,7 @@
         save(); await wait(300);
       } else if (node.emo !== undefined) {
         st.pending.shift(); st.emo = node.emo;
-        $("chat-avatar").innerHTML = portraitSVG(H.portrait, node.emo);
+        $("chat-avatar").innerHTML = avatarHTML(id, node.emo);
         pushMsg(id, { who: "c", t: `${H.name}님이 프로필 사진을 변경했습니다` });
         save(); await wait(300);
       } else if (node.aff !== undefined) {
@@ -467,7 +487,7 @@
   async function showTyping(id, ms) {
     const row = document.createElement("div");
     row.className = "msg-row";
-    row.innerHTML = `<div class="m-avatar">${portraitSVG(HERO.get(id).portrait, S.h[id].emo)}</div><div class="typing"><i></i><i></i><i></i></div>`;
+    row.innerHTML = `<div class="m-avatar">${avatarHTML(id, S.h[id].emo)}</div><div class="typing"><i></i><i></i><i></i></div>`;
     $("msg-list").appendChild(row); typingEl = row; scrollBottom();
     await wait(ms);
     if (typingEl) { typingEl.remove(); typingEl = null; }
@@ -720,7 +740,7 @@
       const H = HERO.get(id);
       const el = document.createElement("div");
       el.className = "day-card";
-      el.innerHTML = `<div class="avatar-sm">${portraitSVG(H.portrait, S.h[id].emo)}</div>
+      el.innerHTML = `<div class="avatar-sm">${avatarHTML(id, S.h[id].emo)}</div>
         <div><div class="nm">${H.name}</div><div class="ds">${H.title}</div></div>`;
       el.onclick = () => { $("modal-final").classList.add("hidden"); confessTo(id); };
       list.appendChild(el);

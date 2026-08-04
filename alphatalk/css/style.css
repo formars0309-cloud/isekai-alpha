@@ -401,6 +401,12 @@ body {
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .ending-desc { color: var(--dim); font-size: 14px; line-height: 1.7; margin: 14px 0 18px; }
+/* ── 아바타 이미지 (faces). SVG 초상화와 같은 자리를 그대로 채운다 ── */
+.avatar-sm .face, .chat-avatar .face, .msg-row .m-avatar .face, .room .avatar .face {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  user-select: none; -webkit-user-drag: none;
+}
+
 /* ── 채팅방 사진 (그녀가 보낸 사진) ── */
 .bubble.photo { padding: 5px; overflow: hidden; }
 .bubble.photo img {
