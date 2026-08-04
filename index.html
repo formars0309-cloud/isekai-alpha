@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>이세계알파남</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 타이틀 화면 -->
+  <section id="scr-title" class="screen active">
+    <div class="title-inner">
+      <div class="title-moon"></div>
+      <p class="title-sub">평범한 당신의 두 번째 인생</p>
+      <h1 class="title-logo"><span>이세계</span><em>알파남</em></h1>
+      <p class="title-tag">스탯을 키워라. 마음을 얻어라. 전설이 되어라.</p>
+      <div class="title-btns">
+        <button id="btn-newgame" class="btn btn-primary">새로운 인생 시작</button>
+        <button id="btn-continue" class="btn btn-ghost hidden">이어하기</button>
+      </div>
+      <p class="title-notice">15세 이용가 · 등장인물은 모두 성인입니다 · v0.1</p>
+    </div>
+  </section>
+
+  <!-- 이름 입력 -->
+  <section id="scr-naming" class="screen">
+    <div class="naming-inner">
+      <p class="naming-sys">【알파 시스템】</p>
+      <h2>전생자의 이름을<br>등록해 주십시오.</h2>
+      <input id="inp-name" type="text" maxlength="8" placeholder="김철수" autocomplete="off">
+      <p class="naming-hint">최대 8자 · 미입력 시 '김철수'</p>
+      <button id="btn-name-ok" class="btn btn-primary">운명 확정</button>
+    </div>
+  </section>
+
+  <!-- 비주얼노벨(대화) 화면 -->
+  <section id="scr-vn" class="screen">
+    <div id="vn-bg" class="vn-bg"></div>
+    <div id="vn-portrait" class="vn-portrait"></div>
+    <div id="vn-box" class="vn-box">
+      <div id="vn-name" class="vn-name"></div>
+      <p id="vn-text" class="vn-text"></p>
+      <div class="vn-next">▼</div>
+    </div>
+    <div id="vn-choices" class="vn-choices hidden"></div>
+  </section>
+
+  <!-- 메인 허브 -->
+  <section id="scr-hub" class="screen">
+    <header class="hud">
+      <div class="hud-left">
+        <div class="hud-day">DAY <b id="hud-day">1</b></div>
+        <div class="hud-rank" id="hud-rank">F</div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-chip">⚡ <b id="hud-ap">3</b></div>
+        <div class="hud-chip">🪙 <b id="hud-gold">50</b>G</div>
+      </div>
+    </header>
+
+    <div class="hub-scroll">
+      <p class="hub-greet" id="hub-greet">아르카디아의 아침이 밝았다.</p>
+      <div id="quest-panel" class="quest-panel">
+        <div class="q-head">📜 오늘의 알파 미션 <span id="q-bonus" class="q-bonus">전부 완료 시 ⚡+1</span></div>
+        <div id="q-list" class="q-list"></div>
+      </div>
+      <div id="loc-list" class="loc-list"></div>
+      <button id="btn-sleep" class="btn btn-sleep">🌙 하루 마무리하고 잠들기</button>
+    </div>
+
+    <button id="btn-status" class="fab-status">📊<span>상태창</span></button>
+  </section>
+
+  <!-- 엔딩 화면 -->
+  <section id="scr-ending" class="screen">
+    <div class="ending-inner">
+      <p class="ending-sys">【알파 시스템 최종 판정】</p>
+      <h2 class="ending-title">알파남 등극</h2>
+      <div id="ending-portrait" class="ending-portrait"></div>
+      <p id="ending-heroine" class="ending-heroine"></p>
+      <p id="ending-quote" class="ending-quote"></p>
+      <div id="ending-stats" class="ending-stats"></div>
+      <button id="btn-restart" class="btn btn-primary">새로운 인생 다시 살기</button>
+    </div>
+  </section>
+
+  <!-- 상태창 모달 -->
+  <div id="modal-status" class="modal hidden">
+    <div class="modal-card status-card">
+      <div class="status-head">
+        <span class="status-title">【 상태창 】</span>
+        <button class="modal-close" data-close="modal-status">✕</button>
+      </div>
+      <div class="status-id">
+        <span id="st-name">김철수</span>
+        <span id="st-rank" class="rank-badge">F · 모태솔로</span>
+      </div>
+      <div id="st-stats" class="st-stats"></div>
+      <p class="st-sep">─ 인연 ─</p>
+      <div id="st-heroines" class="st-heroines"></div>
+    </div>
+  </div>
+
+  <!-- 하루 요약 모달 -->
+  <div id="modal-summary" class="modal hidden">
+    <div class="modal-card summary-card">
+      <p class="summary-sys">【일일 정산】</p>
+      <h3 id="sum-day">DAY 1 종료</h3>
+      <div id="sum-body" class="sum-body"></div>
+      <p id="sum-snark" class="sum-snark"></p>
+      <button id="btn-sum-ok" class="btn btn-primary">다음 날로</button>
+    </div>
+  </div>
+
+  <div id="toast-wrap" class="toast-wrap"></div>
+</div>
+
+<script src="js/portraits.js"></script>
+<script src="js/data.js"></script>
+<script src="js/story2.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

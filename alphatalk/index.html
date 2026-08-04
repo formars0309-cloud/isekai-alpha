@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>이세계알파남 : 알파톡 — 제1화 기사단장 편</title>
+<meta name="description" content="이세계로 전이된 당신에게, 왕국 기사단장이 먼저 메시지를 보내온다. 건국제 무도회까지 7일간의 메신저 연애 시뮬레이션.">
+<meta property="og:title" content="이세계알파남 : 알파톡 — 제1화 기사단장 편">
+<meta property="og:description" content="그녀에게서, 먼저 연락이 온다. 건국제 무도회까지 7일.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 타이틀 -->
+  <section id="scr-title" class="screen active">
+    <div class="title-inner">
+      <p class="title-series">이세계알파남</p>
+      <h1 class="title-logo">알파톡</h1>
+      <p class="title-sub">제1화 · 기사단장 편</p>
+      <p class="title-tag">— 그녀에게서, 먼저 연락이 온다 —</p>
+      <p class="title-blurb">트럭에 치여 도착한 이세계.<br>
+        지급받은 통신 마도구에, 왕국 기사단장이 먼저 말을 걸어왔다.<br>
+        건국제 무도회까지 <b>7일</b>. 답장은 전부 당신이 고른다.</p>
+      <div class="title-btns">
+        <button id="btn-new" class="btn btn-primary">개통하기</button>
+        <button id="btn-continue" class="btn btn-ghost hidden">이어하기</button>
+      </div>
+      <p class="title-notice">15세 이용가 · 등장인물은 모두 성인입니다 · 플레이 시간 약 20분</p>
+      <button id="btn-settings" class="title-adv">고급 설정 <span id="ai-badge" class="ai-badge off">AI OFF</span></button>
+    </div>
+  </section>
+
+  <!-- 이름 입력 -->
+  <section id="scr-naming" class="screen">
+    <div class="naming-inner">
+      <p class="naming-sys">【알파톡 개통 절차】</p>
+      <h2>단말 명의자 이름을<br>입력해 주십시오.</h2>
+      <input id="inp-name" type="text" maxlength="8" placeholder="김철수" autocomplete="off">
+      <button id="btn-name-ok" class="btn btn-primary">개통 완료</button>
+    </div>
+  </section>
+
+  <!-- 채팅방 목록 (홈) -->
+  <section id="scr-home" class="screen">
+    <header class="home-head">
+      <div class="home-title">알파톡</div>
+      <div id="dday" class="dday">건국제 무도회 D-7</div>
+    </header>
+    <div id="day-banner" class="day-banner">DAY 1 · 아침</div>
+    <div id="room-list" class="room-list"></div>
+    <div class="home-stats" id="home-stats"></div>
+    <button id="btn-daycard" class="btn btn-day hidden">☀️ 오늘의 일과 정하기</button>
+    <button id="btn-final" class="btn btn-primary hidden">💍 광장 분수로 나간다 — 최종 신청</button>
+    <button id="btn-sleep" class="btn btn-night hidden">🌙 하루 마무리</button>
+  </section>
+
+  <!-- 채팅방 -->
+  <section id="scr-chat" class="screen">
+    <header class="chat-head">
+      <button id="btn-back" class="back-btn">‹</button>
+      <div class="chat-peer">
+        <div id="chat-avatar" class="chat-avatar"></div>
+        <div>
+          <div id="chat-name" class="chat-name">엘리시아</div>
+          <div id="chat-status" class="chat-status">검은 거짓말하지 않는다.</div>
+        </div>
+      </div>
+    </header>
+    <div id="msg-scroll" class="msg-scroll"><div id="msg-list" class="msg-list"></div></div>
+    <div id="reply-bar" class="reply-bar hidden"></div>
+  </section>
+
+  <!-- AI 설정 모달 -->
+  <div id="modal-ai" class="modal hidden">
+    <div class="modal-card">
+      <p class="cards-sys">【 AI 대화 생성 】</p>
+      <p class="ai-warn">⚠️ 개발자·실험용 기능입니다. 그냥 플레이하시려면 이 창을 닫으세요 — 게임은 이대로 완전히 즐길 수 있습니다.</p>
+      <p class="ai-desc">
+        본인의 Claude API 키를 넣으면 <b>엘리시아의 대사와 선택지 3개가 매번 새로 생성</b>됩니다.
+        스탯·호감도·지난 대화를 기억해 반응이 달라집니다.
+        키가 없으면 미리 작성된 대본으로 플레이되며, 그것만으로도 대화마다 최대 5가지 변주가 준비돼 있습니다.<br>
+        <b>사용료는 본인 계정에 청구됩니다</b>(Haiku 기준 한 판 약 90원).
+      </p>
+      <label class="ai-label">API 키</label>
+      <input id="inp-apikey" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+      <p class="ai-note">
+        🔒 키는 <b>이 브라우저에만</b> 저장되고 Anthropic API로만 전송됩니다. 공용 PC에서는 사용하지 마세요.<br>
+        키 발급: console.anthropic.com → API Keys
+      </p>
+      <label class="ai-label">모델</label>
+      <div id="model-list" class="model-list"></div>
+      <div id="ai-status" class="ai-status hidden"></div>
+      <button id="btn-ai-test" class="btn btn-ghost">연결 테스트</button>
+      <button id="btn-ai-save" class="btn btn-primary">저장</button>
+      <button id="btn-ai-close" class="btn btn-ghost">닫기</button>
+    </div>
+  </div>
+
+  <!-- 최종 신청 모달 -->
+  <div id="modal-final" class="modal hidden">
+    <div class="modal-card"></div>
+  </div>
+
+  <!-- 일과 카드 모달 -->
+  <div id="modal-cards" class="modal hidden">
+    <div class="modal-card">
+      <p class="cards-sys">【오늘의 일과 — 하나만 고를 수 있다】</p>
+      <div id="card-list" class="card-list"></div>
+    </div>
+  </div>
+
+  <!-- 엔딩 -->
+  <section id="scr-ending" class="screen">
+    <div class="ending-inner">
+      <p class="ending-sys" id="ending-sys">【건국제 무도회 — 결과】</p>
+      <div id="ending-art" class="ending-art hidden"></div>
+      <div id="ending-icon" class="ending-icon">💃</div>
+      <h2 id="ending-title" class="ending-title">파트너 성사</h2>
+      <p id="ending-desc" class="ending-desc"></p>
+      <div id="ending-epilogue" class="ending-epilogue hidden"></div>
+      <div id="ending-stats" class="ending-stats"></div>
+      <div id="share-box" class="share-box hidden"></div>
+      <button id="btn-share" class="btn btn-primary">📋 결과 복사해서 자랑하기</button>
+      <button id="btn-log" class="btn btn-ghost">💬 대화 로그 다시 보기</button>
+      <button id="btn-retry" class="btn btn-ghost">처음부터 다시</button>
+      <p class="ending-foot">대화는 매 판 달라집니다. 다시 하면 그녀는 다른 말을 겁니다.</p>
+    </div>
+  </section>
+
+</div>
+<script src="js/portraits.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data.js"></script>
+<script src="js/variants.js"></script>
+<script src="js/variants2.js"></script>
+<script src="js/endings.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/heroines.js"></script>
+<script src="js/engine.js"></script>
+</body>
+</html>
