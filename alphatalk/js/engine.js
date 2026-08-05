@@ -265,7 +265,7 @@
       const replied = (S.used[k] || []).indexOf(id) >= 0;
       const preview = read ? "✓ 읽었지만 답장하지 못했다"
         : missed ? "읽지 않았다"
-        : st.pendingChoices ? `${H.name}가 답장을 기다리고 있다…`
+        : st.pendingChoices ? "답장을 기다리고 있다…"
         : incoming > 0 ? "새로운 메시지가 도착했다"
         : replied ? "✓ 오늘 답장함"
         : last ? (last.photo ? "📷 사진" : (last.who === "me" ? "나: " : "") + last.t) : "…";
@@ -388,7 +388,7 @@
       else avatar = `<div class="m-avatar">${avatarHTML(id, m.emo || "normal")}</div>`;
     }
     const body = m.photo
-      ? `<div class="bubble photo"><img src="${esc(m.photo)}" alt="${esc(m.cap || "엘리시아가 보낸 사진")}" decoding="async" role="button" tabindex="0" aria-label="사진 크게 보기">` +
+      ? `<div class="bubble photo"><img src="${esc(m.photo)}" alt="${esc(m.cap || "그녀가 보낸 사진")}" decoding="async" role="button" tabindex="0" aria-label="사진 크게 보기">` +
         (m.cap ? `<div class="photo-cap">${esc(m.cap)}</div>` : "") + `</div>`
       : `<div class="bubble">${esc(m.t)}</div>`;
     row.innerHTML = `${avatar}${body}
@@ -995,7 +995,7 @@
       lines.push(`${outcomeMark(o)} ${o.name} ${o.aff}/100`);
     });
     lines.push(`근력 ${S.stats.str} · 지능 ${S.stats.int} · 매력 ${S.stats.cha}`);
-    lines.push("", "— 그녀에게서, 먼저 연락이 온다 —", location.origin + location.pathname);
+    lines.push("", "— 그녀들에게서, 먼저 연락이 온다 —", location.origin + location.pathname);
     return lines.join("\n");
   }
   async function doShare() {
