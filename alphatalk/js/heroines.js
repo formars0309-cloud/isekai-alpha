@@ -109,6 +109,7 @@ const HEROINES = {
   if (typeof LUNA_MILESTONES !== "undefined") l.milestones = LUNA_MILESTONES;
   if (typeof LUNA_SCOUT !== "undefined") l.scout = LUNA_SCOUT;
   if (typeof LUNA_EPILOGUE !== "undefined") l.epilogue = LUNA_EPILOGUE;
+  if (typeof LUNA_VARIANTS !== "undefined") l.variants = LUNA_VARIANTS;
   Object.keys(l.moods).forEach((d) => { if (l.days[d]) l.days[d].mood = l.moods[d]; });
   delete l.pending;                                // 7일치가 다 갖춰졌으므로 목록에 등장
 })();
@@ -123,6 +124,7 @@ const HEROINES = {
   if (typeof SERA_MILESTONES !== "undefined") s.milestones = SERA_MILESTONES;
   if (typeof SERA_SCOUT !== "undefined") s.scout = SERA_SCOUT;
   if (typeof SERA_EPILOGUE !== "undefined") s.epilogue = SERA_EPILOGUE;
+  if (typeof SERA_VARIANTS !== "undefined") s.variants = SERA_VARIANTS;
   Object.keys(s.moods).forEach((d) => { if (s.days[d]) s.days[d].mood = s.moods[d]; });
   delete s.pending;
 })();

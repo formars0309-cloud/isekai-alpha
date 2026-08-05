@@ -12,7 +12,11 @@
   const DEBUG = location.search.includes("debug=1");
 
   const SUCCESS_LINE = 80;
+  // D1 은 튜토리얼이라 세 명 모두와 인사할 수 있다. D2 부터가 진짜 게임 —
+  // 하루 네 번, 셋 중 하나는 반드시 답을 못 받는 구조가 그때 시작된다.
   const SLOTS = { morning: 2, night: 2 };
+  const TUTORIAL_DAY = 1;
+  const slotCap = (kind) => (S && S.day === TUTORIAL_DAY ? HERO.active().length : SLOTS[kind]);
   const MOOD_MATCH = { proud: "wit", lonely: "bold", tired: "care" };
   const STYLE_NM = { bold: "직진", wit: "재치", care: "배려" };
   // 밤은 무겁고 아침은 가볍다. 후반일수록 값지다.
@@ -69,7 +73,7 @@
 
   /* ---------------- 슬롯 ---------------- */
   const slotKind = () => (S.phase === "morning" ? "morning" : "night");
-  const slotsLeft = (kind) => SLOTS[kind] - (S.used[kind] || []).length;
+  const slotsLeft = (kind) => slotCap(kind) - (S.used[kind] || []).length;
   const canReply = (id) => {
     const k = slotKind();
     if (S.phase === "day") return false;
@@ -231,8 +235,9 @@
     const label = { morning: "아침", day: "낮", night: "밤", done: "밤 · 소등 전" }[S.phase] || "";
     const k = slotKind();
     const slotTxt = (S.phase === "morning" || S.phase === "night")
-      ? `　${S.phase === "morning" ? "☀️" : "🌙"} 답장 <b>${slotsLeft(k)}</b>/${SLOTS[k]}` : "";
-    $("day-banner").innerHTML = `DAY ${S.day} · ${label}${slotTxt}`;
+      ? `　${S.phase === "morning" ? "☀️" : "🌙"} 답장 <b>${slotsLeft(k)}</b>/${slotCap(k)}` : "";
+    const tuto = S.day === TUTORIAL_DAY ? `<span class="tuto-tag">TUTORIAL</span>` : "";
+    $("day-banner").innerHTML = `DAY ${S.day} · ${label}${slotTxt}${tuto}`;
 
     const list = $("room-list");
     list.innerHTML = "";
@@ -661,6 +666,14 @@
     S.used = { morning: [], night: [] };
     S.scouted = null;
     const ids = HERO.active();
+    // 튜토리얼 → 본편 전환을 명시한다. 슬롯이 줄어드는 걸 모르면 D2 에서 당황한다.
+    if (day === TUTORIAL_DAY) {
+      botMsg(`【튜토리얼】 첫날은 ${ids.length}명 모두와 인사할 수 있습니다. 아침 ${ids.length}회, 밤 ${ids.length}회.\n` +
+        "답장에는 직진·재치·배려 세 갈래가 있고 셋 다 유효합니다. 다만 그날 그 사람의 기분과 맞으면 훨씬 깊게 꽂힙니다.");
+    } else if (day === TUTORIAL_DAY + 1) {
+      botMsg(`【안내】 튜토리얼 종료. 오늘부터 답장은 아침 ${SLOTS.morning}회, 밤 ${SLOTS.night}회로 줄어듭니다.\n` +
+        `${ids.length}명 중 최소 한 명은 매일 답을 받지 못합니다. 누구를 비울지가 이 게임의 전부입니다.`);
+    }
     // 전원에게서 아침 메시지가 온다
     for (const id of ids) {
       const H = HERO.get(id), st = S.h[id];

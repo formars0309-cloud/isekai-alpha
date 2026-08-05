@@ -613,6 +613,7 @@ const LUNA_ENDINGS = {
   /* 45~64 */
   fail: {
     icon: "🌱", title: "관측은 계속됩니다",
+    art: "img/luna-fail.jpg",
     script: [
       { c: "당신은 계단 아래에서, 목소리로 말했다" },
       { e: "………", d: 1500 },

@@ -103,6 +103,12 @@ body {
   border: 1px solid rgba(255,126,182,.4); color: var(--pink);
 }
 .day-banner { padding: 0 18px 10px; color: var(--dim); font-size: 13px; }
+.tuto-tag {
+  margin-left: 8px; padding: 2px 7px; border-radius: 6px;
+  font-size: 10px; font-weight: 800; letter-spacing: 1px;
+  background: rgba(159,208,255,.16); border: 1px solid rgba(159,208,255,.45);
+  color: var(--sys); vertical-align: 2px;
+}
 .day-banner b { color: var(--gold); font-size: 14px; }
 
 /* 오늘 답장을 마친 방 */

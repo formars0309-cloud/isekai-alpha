@@ -620,6 +620,7 @@ const SERA_ENDINGS = {
   /* 80~89 */
   ok: {
     icon: "💃", title: "다녀오세요, 말고",
+    art: "img/sera-ok.jpg",
     script: [
       { c: "당신은 분수 앞에서, 단말이 아니라 목소리로 말했다" },
       { e: "………", d: 1400 },
@@ -637,6 +638,7 @@ const SERA_ENDINGS = {
   /* 65~79 */
   near: {
     icon: "🌧️", title: "음악이 끝날 때까지",
+    art: "img/sera-near.jpg",
     script: [
       { c: "당신은 분수 앞에서, 목소리로 말했다" },
       { e: "………", d: 1600 },
