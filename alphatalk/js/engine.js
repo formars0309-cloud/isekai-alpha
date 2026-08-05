@@ -34,6 +34,9 @@
       msgs: [], unread: 0, status: H.status, emo: "normal", time: "",
       pending: [], pendingChoices: null, variantLog: {}, aiMemos: [],
       noReplyDays: 0,
+      // "day:phase" — 답장할 수 없는 상태에서 방을 열어 끝까지 읽은 시점.
+      // 표시 전용이다. pendingChoices 를 지우면 낮 카드 개방·취침 경고·phase 전환이 어긋난다.
+      readPhase: "",
     };
   }
   function freshState() {
@@ -84,6 +87,13 @@
     const k = slotKind();
     if ((S.used[k] || []).indexOf(id) < 0) S.used[k].push(id);
   }
+  /* 읽음 기록은 날짜·시간대 단위다. 다음 아침/밤이 되면 저절로 무효가 된다.
+     done 은 밤의 연장이므로 같은 칸으로 본다. */
+  const phaseKey = () => S.day + ":" + (S.phase === "done" ? "night" : S.phase);
+  /* 이 시간대에 답장하지 못한 채 지나간 상대. 이미 답장한 상대는 해당 없다. */
+  const missedTurn = (id) => !canReply(id) && (S.used[slotKind()] || []).indexOf(id) < 0;
+  /* 그중 끝까지 읽기까지 한 상태 — "읽었지만 답장하지 못했다" */
+  const readNoReply = (id) => missedTurn(id) && S.h[id].readPhase === phaseKey();
 
   /* ---------------- 화면 ---------------- */
   function show(id) {
@@ -112,15 +122,17 @@
       const th = Number(k);
       if (before < th && st.aff >= th && !st.milestones[k]) {
         st.milestones[k] = 1;
-        botMsg(`[${H.name}] ` + ms[k]);
+        botMsg(`[${H.name}] ` + ms[k], id);
       }
     });
     save();
   }
 
   /* ---------------- 봇 방 ---------------- */
-  function botMsg(t) {
-    S.bot.msgs.push({ who: "bot", t: fmt(t), time: clock(), d: S.day });
+  /* id 를 받아야 {aff} 가 그 히로인의 호감도로 치환된다.
+     엔진 v5 에서 S.aff → S.h[id].aff 로 쪼갤 때 여기만 누락돼 "호감도 /100" 이 나왔다. */
+  function botMsg(t, id) {
+    S.bot.msgs.push({ who: "bot", t: fmt(t, id), time: clock(), d: S.day });
     S.bot.unread++;
     S.bot.time = "지금";
     SND.bot();
@@ -220,7 +232,7 @@
       const st = S.h[id];
       while (st.pending.length) {
         const n = st.pending[0];
-        if (n.bot !== undefined) { st.pending.shift(); botMsg(n.bot); }
+        if (n.bot !== undefined) { st.pending.shift(); botMsg(n.bot, id); }
         else if (n.aff !== undefined) { st.pending.shift(); addAff(id, n.aff); }
         else break;
       }
@@ -243,15 +255,22 @@
     list.innerHTML = "";
     HERO.active().forEach((id) => {
       const H = HERO.get(id), st = S.h[id];
-      const incoming = currentRoom === id ? 0 : countIncoming(id);
-      const unread = st.unread + incoming;
+      /* 답장을 못 하고 지나간 상대는 읽었는지로 갈린다.
+         읽었으면 배지를 지우고, 안 읽었으면 진짜 안읽음이므로 배지를 그대로 둔다. */
+      const read = readNoReply(id);
+      const missed = !read && missedTurn(id) && (!!st.pendingChoices || st.pending.length > 0);
+      const incoming = (currentRoom === id || read) ? 0 : countIncoming(id);
+      const unread = read ? 0 : st.unread + incoming;
       const last = st.msgs.length ? st.msgs[st.msgs.length - 1] : null;
       const replied = (S.used[k] || []).indexOf(id) >= 0;
-      const preview = st.pendingChoices ? `${H.name}가 답장을 기다리고 있다…`
+      const preview = read ? "✓ 읽었지만 답장하지 못했다"
+        : missed ? "읽지 않았다"
+        : st.pendingChoices ? `${H.name}가 답장을 기다리고 있다…`
         : incoming > 0 ? "새로운 메시지가 도착했다"
         : replied ? "✓ 오늘 답장함"
         : last ? (last.photo ? "📷 사진" : (last.who === "me" ? "나: " : "") + last.t) : "…";
-      list.appendChild(roomCard(id, H.name, H.title, preview, st.time, unread, replied, avatarHTML(id, st.emo)));
+      list.appendChild(roomCard(id, H.name, H.title, preview, st.time, unread, replied,
+        avatarHTML(id, st.emo), read || missed));
     });
     const lastBot = S.bot.msgs.length ? S.bot.msgs[S.bot.msgs.length - 1].t : "…";
     list.appendChild(roomCard("bot", "알파 시스템", "관전 봇", lastBot, S.bot.time, S.bot.unread, false, null));
@@ -288,9 +307,11 @@
     return Math.max(n, (st.pending.length || st.pendingChoices) ? 1 : 0);
   }
 
-  function roomCard(id, nm, sub, preview, time, unread, replied, svg) {
+  /* unanswered 는 replied 와 뜻이 정반대라 스타일을 공유하면 안 된다.
+     흐리게 하는 건 같지만 프리뷰 색은 초록(답장함)이 아니라 회색으로 간다. */
+  function roomCard(id, nm, sub, preview, time, unread, replied, svg, unanswered) {
     const el = document.createElement("div");
-    el.className = "room" + (replied ? " replied" : "");
+    el.className = "room" + (replied ? " replied" : "") + (unanswered ? " unanswered" : "");
     el.setAttribute("role", "button"); el.setAttribute("tabindex", "0");
     el.innerHTML = `<div class="avatar">${svg || "📱"}</div>
       <div class="info"><div class="nm">${nm}<small>${sub}</small></div>
@@ -445,6 +466,18 @@
     scrollBottom(true);
     requestAnimationFrame(() => scrollBottom(true));
   }
+  /* 선택지가 열리는 순간은 "지금 읽고 답하라"는 자리다. 유저가 위를 올려 읽던 중이면
+     stickBottom 이 false 라 scrollBottomSoon 이 그냥 빠져나가고, 마지막 대사가 답장 바
+     뒤에 가린 채 남았다. 여기서는 stickBottom 을 무시하고 강제로 붙인다.
+     scrollHeight 로 계산하면 바 높이가 확정되기 전이라 목표를 놓치므로, 마지막 요소를
+     직접 scrollIntoView 시켜 브라우저가 실제 가시 영역 기준으로 맞추게 한다. */
+  function revealLastMessage() {
+    stickBottom = true;
+    const last = $("msg-list").lastElementChild;
+    if (last && last.scrollIntoView) last.scrollIntoView({ block: "end", behavior: "auto" });
+    else scrollBottom(true);
+    requestAnimationFrame(() => scrollBottom(true));
+  }
   function pushMsg(id, m) {
     m.d = S.day;
     msgsOf(id).push(m);
@@ -514,7 +547,7 @@
         pushMsg(id, { who: node.c !== undefined ? "c" : "note", t: fmt(node.c !== undefined ? node.c : node.note, id) });
         st.pending.shift(); save();
       } else if (node.bot !== undefined) {
-        st.pending.shift(); save(); botMsg(`[${H.name}] ` + node.bot);
+        st.pending.shift(); save(); botMsg(`[${H.name}] ` + node.bot, id);
       } else if (node.status !== undefined) {
         st.pending.shift(); st.status = node.status;
         $("chat-status").textContent = node.status;
@@ -568,10 +601,12 @@
     const bar = $("reply-bar");
     bar.innerHTML = "";
     if (!canReply(id)) {
-      // 슬롯 소진 — 읽을 수는 있지만 답할 수 없다
+      // 슬롯 소진 — 읽을 수는 있지만 답할 수 없다.
+      // 이 안내를 띄웠다는 건 유저가 여기까지 실제로 읽었다는 뜻이므로 그때 기록한다.
+      if (missedTurn(id)) { S.h[id].readPhase = phaseKey(); save(); }
       bar.innerHTML = `<div class="reply-none">오늘은 ${HERO.get(id).name}에게 답장할 여유가 없다.<br>
         <small>${S.phase === "morning" ? "아침" : "밤"} 답장 기회를 모두 썼다.</small></div>`;
-      bar.classList.remove("hidden"); scrollBottomSoon(); return;
+      bar.classList.remove("hidden"); revealLastMessage(); return;
     }
     bar.innerHTML = `<div class="reply-label">▼ 답장을 선택하세요 (${slotsLeft(slotKind())}회 남음)</div>`;
     choices.forEach((c) => {
@@ -608,7 +643,7 @@
       }
       bar.appendChild(btn);
     });
-    bar.classList.remove("hidden"); scrollBottomSoon();
+    bar.classList.remove("hidden"); revealLastMessage();
   }
   function hideReplies() { $("reply-bar").classList.add("hidden"); }
   function checkReq(req) {
@@ -657,10 +692,38 @@
   /* ---------------- 하루 흐름 ---------------- */
   function onScriptDone(id) {
     const st = S.h[id];
+    // 선택지가 아예 없는 대화(회수된 아침 등)를 끝까지 본 경우도 "읽음"이다.
+    if (!st.pendingChoices && missedTurn(id)) { st.readPhase = phaseKey(); save(); }
     if (!st.pendingChoices && canReply(id) === false && S.phase === "night" && S.day >= 7) { /* 최종일 */ }
     if (S.phase === "night" && !anyVisible()) S.phase = "done";
     renderHome();
   }
+  /* 시간대가 끝나면 답하지 못한 대화의 선택지를 회수한다.
+     이걸 안 하면 밤에 방을 열었을 때 아침 선택지가 그대로 떠서
+     ① 아침 대화가 밤 슬롯을 잡아먹고 ② 아침 대사가 밤 호감도 표(AFF_NIGHT)로 계산되고
+     ③ 정작 밤 대화는 슬롯이 없어 답장 불가가 된다.
+     대사 노드는 남겨 나중에 읽을 수 있게 하고, 선택지 자리에는 지나간 표시만 남긴다.
+     hurt 회복 분기처럼 선택지가 branch 안에 숨은 대본이 있어 재귀로 훑어야 한다. */
+  const MISSED_MARK = "…답장하지 못한 채 아침이 지나갔다";
+  function retireChoices(nodes) {
+    return (nodes || []).map((n) => {
+      if (n.choices) return { c: MISSED_MARK };
+      if (n.branch) return { branch: n.branch.map((b) => Object.assign({}, b, { then: retireChoices(b.then) })) };
+      return n;
+    });
+  }
+  function retireUnanswered(id) {
+    const st = S.h[id];
+    if (!st.pendingChoices && !st.pending.some((n) => n.choices || n.branch)) return;
+    if (st.pendingChoices) {
+      // 선택지를 봤다는 건 이미 읽었다는 뜻이다. 배지가 다시 뜨지 않게 unread 는 건드리지 않는다.
+      st.pendingChoices = null;
+      msgsOf(id).push({ who: "c", t: MISSED_MARK, d: S.day });
+    }
+    st.pending = retireChoices(st.pending);
+    save();
+  }
+
   async function queueDay(day) {
     S.phase = "morning";
     S.used = { morning: [], night: [] };
@@ -679,7 +742,7 @@
       const H = HERO.get(id), st = S.h[id];
       const dayData = (H.days || {})[day];
       if (!dayData) continue;
-      (dayData.bot || []).forEach((t) => botMsg(`[${H.name}] ` + t));
+      (dayData.bot || []).forEach((t) => botMsg(`[${H.name}] ` + t, id));
       let morning = await aiOrScript(id, "morning", scriptFor(id, day, "morning") || []);
       if (st.flags.__ignored) { morning = (H.ignoreMorning || []).concat(morning); delete st.flags.__ignored; }
       st.pending = st.pending.concat(morning);
@@ -713,6 +776,8 @@
   }
   function pickCard(cd, target) {
     SND.card();
+    // 아침은 여기서 확정 종료된다(카드를 고르지 않으면 밤으로 갈 수 없다).
+    HERO.active().forEach(retireUnanswered);
     S.phase = "day";
     let gain;
     if (cd.stat) {
