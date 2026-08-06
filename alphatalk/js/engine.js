@@ -889,6 +889,18 @@
     if (E[want]) return want;
     return aff >= SUCCESS_LINE ? (E.ok ? "ok" : want) : (E.fail ? "fail" : want);
   }
+  /* 미선택 히로인의 그날 밤 결말.
+     전용 텍스트(endings.unpicked)는 "그의 선택이 그녀가 아니었다"를 전제로 쓰였으므로
+     실제로 누군가에게 신청한 밤에만 쓴다. 신청 없이 끝난 밤(chicken/night)은
+     그 전제가 거짓이라 기존 엔딩(night/chicken/stranger)으로 폴백한다. */
+  function unpickedEnding(id, confessed) {
+    const E = HERO.get(id).endings || {};
+    const tier = S.h[id].aff >= 65 ? "high" : S.h[id].aff >= 45 ? "mid" : "low";
+    if (confessed && E.unpicked && E.unpicked[tier]) return E.unpicked[tier];
+    return tier === "high" ? (E.night || E.chicken || E.stranger || null)
+         : tier === "mid" ? (E.chicken || E.stranger || null)
+         : (E.stranger || E.chicken || null);
+  }
   /* 가장 호감이 높은 히로인 */
   function topHeroine() {
     let top = null, best = -1;
@@ -964,6 +976,24 @@
       epi.innerHTML = parts.map((p) =>
         `<p class="epi">${esc(p).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}</p>`).join("");
       epi.classList.toggle("hidden", !parts.length);
+    }
+    // 나머지 히로인의 그날 밤 — 호감도 내림차순. 동시형의 마무리는 여기까지가 한 세트다.
+    const others = $("ending-others");
+    if (others) {
+      const rest = HERO.active().filter((hid) => hid !== id)
+        .sort((a, b) => S.h[b].aff - S.h[a].aff);
+      const cards = rest.map((hid) => {
+        const E2 = unpickedEnding(hid, confessed);
+        if (!E2) return "";
+        const H2 = HERO.get(hid);
+        return `<div class="other-ending">
+          <div class="oe-head">${E2.icon || "·"} <b>${esc(H2.name)}</b><span class="oe-title"> · ${esc(E2.title || "")}</span></div>
+          <p class="oe-desc">${esc(E2.desc || "").replace(/\n/g, "<br>")}</p></div>`;
+      }).filter(Boolean);
+      others.innerHTML = cards.length
+        ? `<p class="oe-sys">— 같은 밤, 다른 곳에서 —</p>` + cards.join("")
+        : "";
+      others.classList.toggle("hidden", !cards.length);
     }
     const chips = [];
     S.outcomes.forEach((o) => {
